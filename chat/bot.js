@@ -6,8 +6,30 @@ puppeteerExtra.use(StealthPlugin());
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+async function waitForAnySelector(page, selectors, timeout = 30000) {
+  const start = Date.now();
+  for (const selector of selectors) {
+    const handle = await page.$(selector);
+    if (handle) return selector;
+  }
+  while (Date.now() - start < timeout) {
+    for (const selector of selectors) {
+      const handle = await page.$(selector);
+      if (handle) return selector;
+    }
+    await sleep(200);
+  }
+  throw new Error(`Timed out waiting for any selector: ${selectors.join(', ')}`);
+}
+
+async function clickAnySelector(page, selectors, timeout = 30000) {
+  const selector = await waitForAnySelector(page, selectors, timeout);
+  await page.click(selector);
+  return selector;
+}
+
 export async function runAutoGPT() {
-  const { CONVERSATION_HREF, QUERY, RESPONSE_TIMEOUT_MS, HEADLESS, CHROME_PROFILE_DIR } = CHAT_CONFIG;
+  const { CONVERSATION_HREF, QUERY, RESPONSE_TIMEOUT_MS, HEADLESS, CHROME_PROFILE_DIR, LOGIN_TIMEOUT_MS = 90000 } = CHAT_CONFIG;
 
   console.log("🚀 [AutoGPT] Launching Chromium browser...");
   console.log(`   Session profile : ${CHROME_PROFILE_DIR}`);
@@ -52,19 +74,38 @@ export async function runAutoGPT() {
       throw new Error(missingCredentialsMessage);
     }
 
-    await page.click('button[data-testid="login-button"]');
-    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
+    await clickAnySelector(page, ['button[data-testid="login-button"]', 'a[href*="login"]'], 30000);
 
-    await page.waitForSelector('#email-input', { timeout: 20000 });
-    await page.type('#email-input', process.env.CHATGPT_EMAIL, { delay: 60 });
+    const authStartSelector = await waitForAnySelector(
+      page,
+      ['#email-input', 'input[type="email"]', 'input[name="username"]', 'button[data-provider]'],
+      LOGIN_TIMEOUT_MS
+    );
+
+    if (authStartSelector === 'button[data-provider]') {
+      await browser.close();
+      throw new Error('Login halted: social-provider button detected. Use email/password login or set HEADLESS: false and sign in manually once to save session.');
+    }
+
+    const emailSelector = authStartSelector;
+    await page.type(emailSelector, process.env.CHATGPT_EMAIL, { delay: 60 });
     await page.click('button[type="submit"]');
 
-    await page.waitForSelector('#password', { timeout: 20000 });
-    await page.type('#password', process.env.CHATGPT_PASSWORD, { delay: 60 });
+    const passwordSelector = await waitForAnySelector(
+      page,
+      ['#password', 'input[type="password"]'],
+      LOGIN_TIMEOUT_MS
+    );
+
+    await page.type(passwordSelector, process.env.CHATGPT_PASSWORD, { delay: 60 });
     await page.click('button[type="submit"]');
 
     console.log('⏳ [AutoGPT] Waiting for ChatGPT to load after login...');
-    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 });
+    await waitForAnySelector(
+      page,
+      ['#prompt-textarea', 'div[contenteditable="true"][data-testid*="prompt"]', 'nav[aria-label="Chat history"]'],
+      LOGIN_TIMEOUT_MS
+    );
 
     console.log('✅ [AutoGPT] Login successful. Session saved to:', CHROME_PROFILE_DIR);
   } else {
