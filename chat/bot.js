@@ -43,11 +43,11 @@ export async function runAutoGPT() {
     if (!process.env.CHATGPT_EMAIL || !process.env.CHATGPT_PASSWORD) {
       await browser.close();
       throw new Error(
-        'No saved session and no credentials found in .env.
+        ''No saved session and no credentials found in .env.\n' +
 ' +
-          '   Option A: Set HEADLESS: false in chat/config.js, run once, log in manually.
+          ' ' Option A: Set HEADLESS: false in chat/config.js, run once, log in manually.\n' +
 ' +
-          '   Option B: Add CHATGPT_EMAIL and CHATGPT_PASSWORD to your .env file.'
+          ' ' Option B: Add CHATGPT_EMAIL and CHATGPT_PASSWORD to your .env file.'
       );
     }
 
