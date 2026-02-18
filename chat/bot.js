@@ -28,8 +28,8 @@ export async function runAutoGPT() {
 
   await page.setUserAgent(
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
-      'AppleWebKit/537.36 (KHTML, like Gecko) ' +
-      'Chrome/122.0.0.0 Safari/537.36'
+    'AppleWebKit/537.36 (KHTML, like Gecko) ' +
+    'Chrome/122.0.0.0 Safari/537.36'
   );
 
   console.log('🌐 [AutoGPT] Navigating to https://chat.openai.com ...');
@@ -42,16 +42,14 @@ export async function runAutoGPT() {
 
     if (!process.env.CHATGPT_EMAIL || !process.env.CHATGPT_PASSWORD) {
       await browser.close();
-      throw new Error(
-        ''No saved session and no credentials found in .env.\n' +
-' +
-          ' ' Option A: Set HEADLESS: false in chat / config.js, run once, log in manually.\n' +
-' +
-          ' ' Option B: Add CHATGPT_EMAIL and CHATGPT_PASSWORD to your.env file.'
-      );
-      throw new Error(`No saved session and no credentials found in .env.
-Option A: Set HEADLESS: false in chat/config.js, run once, log in manually.
-Option B: Add CHATGPT_EMAIL and CHATGPT_PASSWORD to your .env file.`);
+
+      const missingCredentialsMessage = [
+        'No saved session and no credentials found in .env.',
+        'Option A: Set HEADLESS: false in chat/config.js, run once, log in manually.',
+        'Option B: Add CHATGPT_EMAIL and CHATGPT_PASSWORD to your .env file.'
+      ].join('\n');
+
+      throw new Error(missingCredentialsMessage);
     }
 
     await page.click('button[data-testid="login-button"]');
@@ -87,7 +85,7 @@ Option B: Add CHATGPT_EMAIL and CHATGPT_PASSWORD to your .env file.`);
     throw new Error(
       `Conversation with href "${CONVERSATION_HREF}" was not found in the sidebar.
 ` +
-        '   Make sure CONVERSATION_HREF in chat/config.js is correct and the conversation exists.'
+      '   Make sure CONVERSATION_HREF in chat/config.js is correct and the conversation exists.'
     );
   }
 
@@ -150,8 +148,8 @@ Option B: Add CHATGPT_EMAIL and CHATGPT_PASSWORD to your .env file.`);
   const response = await page.evaluate(() => {
     const nodes = document.querySelectorAll(
       '[data-message-author-role="assistant"], ' +
-        '[class*="agent-turn"], ' +
-        '[data-testid*="conversation-turn-"] .markdown'
+      '[class*="agent-turn"], ' +
+      '[data-testid*="conversation-turn-"] .markdown'
     );
     if (!nodes.length) return null;
     return nodes[nodes.length - 1].innerText.trim();
