@@ -150,11 +150,27 @@ export async function runAutoGPT() {
   await page.click(inputSelector);
   await sleep(300);
 
-  await page.keyboard.down('Control');
-  await page.keyboard.press('KeyA');
-  await page.keyboard.up('Control');
-  await page.keyboard.press('Delete');
+  // Clear the input field using a more reliable method
+  try {
+    await page.evaluate(() => {
+      const input = document.querySelector(inputSelector);
+      if (input) {
+        if (input.tagName === 'TEXTAREA') {
+          input.value = '';
+        } else if (input.contentEditable === 'true') {
+          input.innerHTML = '';
+        }
+      }
+    });
+  } catch (e) {
+    // Fallback: use keyboard shortcuts
+    await page.keyboard.down('Control');
+    await page.keyboard.press('KeyA');
+    await page.keyboard.up('Control');
+    await page.keyboard.press('Backspace');
+  }
   await sleep(200);
+
 
   await page.keyboard.type(QUERY, { delay: 40 });
 
@@ -187,14 +203,20 @@ export async function runAutoGPT() {
   console.log('📥 [AutoGPT] Extracting response from the page...');
 
   const response = await page.evaluate(() => {
+    try {
     const nodes = document.querySelectorAll(
       '[data-message-author-role="assistant"], ' +
       '[class*="agent-turn"], ' +
       '[data-testid*="conversation-turn-"] .markdown'
     );
     if (!nodes.length) return null;
-    return nodes[nodes.length - 1].innerText.trim();
-  });
+    const lastNode = nodes[nodes.length - 1];
+    return lastNode?.innerText?.trim() || null;
+  } catch (err) {
+    console.error('Error extracting response:', err);
+    return null;
+  }
+});
 
   await browser.close();
   console.log('🔒 [AutoGPT] Browser closed cleanly.');
