@@ -96,13 +96,4 @@ Data is written continuously into QuestDB `ticks` and `candles` tables.
 Stop with Ctrl + C.
 
 
-git config --global user.name "MohammadAbwini98"
-git config --global user.email "mohammad.abwini98@gmail.com"
 
-
-git remote add origin https://github.com/MohammadAbwini98/AutoGPT.git
-git branch -M main
-git push -u origin main
-
-
-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
