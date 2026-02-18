@@ -150,26 +150,16 @@ export async function runAutoGPT() {
   await page.click(inputSelector);
   await sleep(300);
 
-  // Clear the input field using a more reliable method
-  try {
-    await page.evaluate(() => {
-      const input = document.querySelector(inputSelector);
-      if (input) {
-        if (input.tagName === 'TEXTAREA') {
-          input.value = '';
-        } else if (input.contentEditable === 'true') {
-          input.innerHTML = '';
-        }
-      }
-    });
-  } catch (e) {
-    // Fallback: use keyboard shortcuts
-    await page.keyboard.down('Control');
-    await page.keyboard.press('KeyA');
-    await page.keyboard.up('Control');
-    await page.keyboard.press('Backspace');
-  }
+  await page.waitForSelector(inputSelector, { timeout: 20000 });
+  // Clear input using focus and keyboard (simpler than evaluate)
+  await page.click(inputSelector);
+  await sleep(300);
+  // Try triple-click to select all (more reliable)
+  await page.click(inputSelector, { clickCount: 3 });
+  await sleep(100);
+  await page.keyboard.press('Delete');
   await sleep(200);
+
 
 
   await page.keyboard.type(QUERY, { delay: 40 });
