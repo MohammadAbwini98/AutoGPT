@@ -1,0 +1,20 @@
+{
+  "name": "autogpt-full",
+  "version": "1.0.0",
+  "description": "AutoGPT ChatGPT automation plus Capital.com market data ingestion into QuestDB.",
+  "main": "chat/index.js",
+  "scripts": {
+    "chat": "node chat/index.js",
+    "market": "node market/main.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.17.0",
+    "@questdb/nodejs-client": "^1.0.3",
+    "puppeteer": "^22.0.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "type": "module"
+}
